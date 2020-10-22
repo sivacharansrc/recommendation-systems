@@ -27,16 +27,16 @@ users_interactions = pd.read_csv(users_interactions)
 ### ASSOCIATING WEIGHT TO DIFFERENT EVENT TYPE
 
 event_type_strength = {
-   'VIEW': 1.0,
-   'LIKE': 2.0, 
-   'BOOKMARK': 3.0, 
-   'FOLLOW': 4.0,
-   'COMMENT CREATED': 5.0,  
+    'VIEW': 1.0,
+    'LIKE': 2.0, 
+    'BOOKMARK': 3.0, 
+    'FOLLOW': 4.0,
+    'COMMENT CREATED': 5.0,  
 }
 
 users_interactions['eventStrength'] = users_interactions['eventType'].apply(lambda x: event_type_strength[x])
 
-### FILTERING OFF DATASET THAT HAVE ATLEAST 5 ARTICLES READ BY A USER
+### FILTERING OFF DATASET THAT HAVE ATLEAST 5 ARTICLES INTERACTED BY A USER
 
 users_interactions_count_df = users_interactions[['personId', 'contentId']].drop_duplicates().groupby(['personId']).size()
 print('Sum of all articles read by users: %d' % len(users_interactions_count_df))
@@ -63,7 +63,7 @@ plt.hist(interactions_full_df['eventStrength'], bins=10)
 plt.show()
 
 # Let us smoothen the distribution, by taking a log with base 2. Since the minimum value in the distribution is 1, 
-# let us add 1 to all values before we take a log with base 2 or else, we might end up with many zeros is the 
+# let us add 1 to all values before we take a log with base 2 or else, we might end up with many zeros, which is the 
 # distribution which we do not want it for the eventStrength
 
 interactions_full_df['eventStrength'] = interactions_full_df['eventStrength'].transform(lambda x : math.log(x+1,2))
@@ -73,10 +73,7 @@ interactions_full_df.head()
 plt.hist(interactions_full_df['eventStrength'], bins=5)
 plt.show()
 
-interactions_train_df, interactions_test_df = train_test_split(interactions_full_df, \
-   stratify=interactions_full_df['personId'], \
-      test_size=0.20, \
-         random_state=42)
+interactions_train_df, interactions_test_df = train_test_split(interactions_full_df,stratify=interactions_full_df['personId'], test_size=0.20,random_state=42)
 
 print('# interactions on Train set: %d' % len(interactions_train_df))
 print('# interactions on Test set: %d' % len(interactions_test_df))
@@ -95,13 +92,12 @@ def get_items_interacted(person_id, interactions_df):
 EVAL_RANDOM_SAMPLE_NON_INTERACTED_ITEMS = 100
 
 class ModelEvaluator:
-
-
+    # Function to get list of all items not interacted by the user
     def get_not_interacted_items_sample(self, person_id, sample_size, seed=42):
         interacted_items = get_items_interacted(person_id, interactions_full_indexed_df)
         all_items = set(shared_articles['contentId'])
         non_interacted_items = all_items - interacted_items
-
+        
         random.seed(seed)
         non_interacted_items_sample = random.sample(non_interacted_items, sample_size)
         return set(non_interacted_items_sample)
@@ -151,13 +147,14 @@ class ModelEvaluator:
         recall_at_5 = hits_at_5_count / float(interacted_items_count_testset)
         recall_at_10 = hits_at_10_count / float(interacted_items_count_testset)
 
-        person_metrics = {'hits@5_count':hits_at_5_count, 
-                          'hits@10_count':hits_at_10_count, 
-                          'interacted_count': interacted_items_count_testset,
-                          'recall@5': recall_at_5,
-                          'recall@10': recall_at_10}
+        person_metrics = {
+            'hits@5_count':hits_at_5_count,
+            'hits@10_count':hits_at_10_count,
+            'interacted_count': interacted_items_count_testset,
+            'recall@5': recall_at_5,
+            'recall@10': recall_at_10}
         return person_metrics
-
+    
     def evaluate_model(self, model):
         #print('Running evaluation for users')
         people_metrics = []
@@ -168,16 +165,14 @@ class ModelEvaluator:
             person_metrics['_person_id'] = person_id
             people_metrics.append(person_metrics)
         print('%d users processed' % idx)
-
-        detailed_results_df = pd.DataFrame(people_metrics) \
-                            .sort_values('interacted_count', ascending=False)
-        
+        detailed_results_df = pd.DataFrame(people_metrics).sort_values('interacted_count', ascending=False)
         global_recall_at_5 = detailed_results_df['hits@5_count'].sum() / float(detailed_results_df['interacted_count'].sum())
         global_recall_at_10 = detailed_results_df['hits@10_count'].sum() / float(detailed_results_df['interacted_count'].sum())
         
-        global_metrics = {'modelName': model.get_model_name(),
-                          'recall@5': global_recall_at_5,
-                          'recall@10': global_recall_at_10}    
+        global_metrics = {
+            'modelName': model.get_model_name(),
+            'recall@5': global_recall_at_5,
+            'recall@10': global_recall_at_10}    
         return global_metrics, detailed_results_df
     
 model_evaluator = ModelEvaluator()
@@ -203,18 +198,13 @@ class PopularityRecommender:
     def recommend_items(self, user_id, items_to_ignore=[], topn=10, verbose=False):
         # Recommend the more popular items that the user hasn't seen yet.
         recommendations_df = self.popularity_df[~self.popularity_df['contentId'].isin(items_to_ignore)].sort_values('eventStrength', ascending = False).head(topn)
-
+        
         if verbose:
             if self.items_df is None:
                 raise Exception('"items_df" is required in verbose mode')
-
-            recommendations_df = recommendations_df.merge(self.items_df, how = 'left', 
-                                                          left_on = 'contentId', 
-                                                          right_on = 'contentId')[['eventStrength', 'contentId', 'title', 'url', 'lang']]
-
-
+            recommendations_df = recommendations_df.merge(self.items_df, how = 'left', left_on = 'contentId', right_on = 'contentId')[['eventStrength', 'contentId', 'title', 'url', 'lang']]
         return recommendations_df
-    
+
 popularity_model = PopularityRecommender(item_popularity_df, shared_articles)
 
 print('Evaluating Popularity recommendation model...')
