@@ -15,12 +15,12 @@ import os
 ### READING THE DATA ###
 
 local_path = os.getcwd()
-shared_articles = local_path + "\\recommendation-system\\input\\shared_articles.csv"
+shared_articles = local_path + "\\recommendation-systems\\input\\shared_articles.csv"
 shared_articles = pd.read_csv(shared_articles)
 shared_articles = shared_articles[shared_articles['eventType'] == 'CONTENT SHARED'].copy().reset_index(drop=True)
 # shared_articles.head()
 
-users_interactions = local_path + "\\recommendation-system\\input\\users_interactions.csv"
+users_interactions = local_path + "\\recommendation-systems\\input\\users_interactions.csv"
 users_interactions = pd.read_csv(users_interactions)
 # users_interactions.head()
 
