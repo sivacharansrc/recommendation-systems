@@ -59,8 +59,8 @@ interactions_full_df.groupby(pd.cut(interactions_full_df['eventStrength'], bins=
 
 interactions_full_df['eventStrength'] = np.where(interactions_full_df['eventStrength'] > 15, 15, interactions_full_df['eventStrength'])
 interactions_full_df.groupby(pd.cut(interactions_full_df['eventStrength'], bins=6)).size()
-plt.hist(interactions_full_df['eventStrength'], bins=10)
-plt.show()
+# plt.hist(interactions_full_df['eventStrength'], bins=10)
+# plt.show()
 
 # Let us smoothen the distribution, by taking a log with base 2. Since the minimum value in the distribution is 1, 
 # let us add 1 to all values before we take a log with base 2 or else, we might end up with many zeros, which is the 
@@ -70,8 +70,8 @@ interactions_full_df['eventStrength'] = interactions_full_df['eventStrength'].tr
 interactions_full_df.groupby(pd.cut(interactions_full_df['eventStrength'], bins=6)).size()
 interactions_full_df.head()
 
-plt.hist(interactions_full_df['eventStrength'], bins=5)
-plt.show()
+# plt.hist(interactions_full_df['eventStrength'], bins=5)
+# plt.show()
 
 interactions_train_df, interactions_test_df = train_test_split(interactions_full_df,stratify=interactions_full_df['personId'], test_size=0.20,random_state=42)
 
